@@ -407,7 +407,7 @@ describe('on a phone', () => {
     expect(within(card).getByText('Squad 6')).toBeInTheDocument();
     expect(within(card).queryByText('Squad 7')).not.toBeInTheDocument();
     expect(within(card).getByTestId('standings-table-cut-line')).toBeInTheDocument();
-    expect(within(card).getByRole('link', { name: 'Full standings, all 12 teams' })).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Full standings, all 12 teams' })).toBeInTheDocument();
   });
 
   test('standings-table: a viewer mid-table gets two teams above and below, and Full standings opens the rest', async () => {
@@ -430,10 +430,32 @@ describe('on a phone', () => {
     expect(within(card).queryByText('Squad 11')).not.toBeInTheDocument();
     expect(within(card).getByTestId('standings-table-you-row')).toHaveTextContent('Squad 8');
 
-    await userEvent.click(within(card).getByRole('link', { name: 'Full standings, all 12 teams' }));
+    const foldedToggle = within(card).getByRole('button', { name: 'Full standings, all 12 teams' });
+    // (1) The toggle renders as a BUTTON with no href — the cheapest wrong fix (anchor + role="button") stays red here.
+    expect(foldedToggle.tagName).toBe('BUTTON');
+    expect(foldedToggle).not.toHaveAttribute('href');
+
+    // (2) The existing click opens the table.
+    await userEvent.click(foldedToggle);
     expect(within(card).getByText('Squad 1')).toBeInTheDocument();
     expect(within(card).getByText('Squad 12')).toBeInTheDocument();
-    expect(within(card).getByRole('link', { name: 'Show fewer teams' })).toHaveAttribute('aria-expanded', 'true');
+    expect(within(card).getByRole('button', { name: 'Show fewer teams' })).toHaveAttribute('aria-expanded', 'true');
+
+    // (3) One more click folds it back — fold is reversible.
+    await userEvent.click(within(card).getByRole('button', { name: 'Show fewer teams' }));
+    expect(within(card).queryByText('Squad 1')).not.toBeInTheDocument();
+    expect(within(card).getByText('Squad 8')).toBeInTheDocument();
+
+    // (4) Space activates the button — this is the core bug being fixed.
+    const refoldedToggle = within(card).getByRole('button', { name: 'Full standings, all 12 teams' });
+    refoldedToggle.focus();
+    await userEvent.keyboard(' ');
+    expect(within(card).getByText('Squad 1')).toBeInTheDocument();
+    expect(within(card).getByText('Squad 12')).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Show fewer teams' })).toHaveAttribute('aria-expanded', 'true');
+
+    // (5) The toggle never changes the URL hash.
+    expect(window.location.hash).toBe('');
   });
 
   test('standings-table: a short league has nothing to fold', async () => {
@@ -443,7 +465,7 @@ describe('on a phone', () => {
 
     const card = await screen.findByTestId('standings-table');
     await within(card).findByText('Squad 4');
-    expect(within(card).queryByRole('link', { name: /Full standings/ })).not.toBeInTheDocument();
+    expect(within(card).queryByRole('button', { name: /Full standings/ })).not.toBeInTheDocument();
   });
 });
 

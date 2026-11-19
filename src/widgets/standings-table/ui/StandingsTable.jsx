@@ -1,7 +1,7 @@
 import React, { useId, useState } from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import {
-  CpuTag, ErrorPanel, Frame, FrameHead, PixelArrow, PixelHeading, pixelSx, Skel, SR_ONLY_SX, TeamMark, YouTag,
+  CpuTag, ErrorPanel, Frame, FrameHead, PixelArrow, PixelHeading, pixelSx, PsLinkButton, Skel, SR_ONLY_SX, TeamMark, YouTag,
 } from '../../../shared/ui/playselect';
 import useStandingsTable from '../model/useStandingsTable';
 
@@ -191,16 +191,11 @@ export default function StandingsTable({ leagueId }) {
 
       {status === 'ready' && folds && (
         <Box sx={{ padding: '0 4px', borderTop: '2px solid var(--ps-rule)' }}>
-          <Box
-            component="a"
-            href="#standings-table"
+          <PsLinkButton
+            ariaLabel={expanded ? 'Show fewer teams' : `Full standings, all ${teamCount} teams`}
             aria-expanded={expanded}
-            aria-label={expanded ? 'Show fewer teams' : `Full standings, all ${teamCount} teams`}
             data-testid="standings-table-full"
-            onClick={(event) => {
-              event.preventDefault();
-              setExpanded((open) => !open);
-            }}
+            onClick={() => setExpanded((open) => !open)}
             sx={{
               minHeight: '44px',
               display: 'inline-flex',
@@ -216,7 +211,7 @@ export default function StandingsTable({ leagueId }) {
             }}
           >
             {expanded ? 'Fewer teams' : 'Full standings'}
-          </Box>
+          </PsLinkButton>
         </Box>
       )}
     </Frame>
